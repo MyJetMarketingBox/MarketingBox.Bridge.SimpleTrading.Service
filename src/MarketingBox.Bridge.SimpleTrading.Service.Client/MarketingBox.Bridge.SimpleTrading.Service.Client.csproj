@@ -23,7 +23,7 @@
     <Authors>MyJetMarketingBox</Authors>
     <Company>MyJetMarketingBox</Company>
     <Product>MarketingBox</Product>
-    <RepositoryUrl>https://github.com/MyJetMarketingBox/MarketingBox.Integration.SimpleTrading</RepositoryUrl>
+    <RepositoryUrl>https://github.com/MyJetMarketingBox/MarketingBox.Bridge.SimpleTrading.Service</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup>
