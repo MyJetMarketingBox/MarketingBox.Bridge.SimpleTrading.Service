@@ -1,4 +1,4 @@
-# Service.AssetsDictionary
+# MarketingBox.Bridge.SimpleTrading.Service
 
 ![Release Service](https://github.com/MyJetWallet/Service.AssetsDictionary/workflows/Release%20Service/badge.svg)
 
