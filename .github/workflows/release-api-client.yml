@@ -47,11 +47,24 @@ jobs:
     - name: Publish the package to GPR
       run: dotnet nuget push src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/*.nupkg -s "https://api.nuget.org/v3/index.json" -k ${{ secrets.NUGET_TOCKEN }}
 
+    - name: pwd
+      run: pwd
+
+    - name: ls
+      run: ls -la
+
+    - name: test
+      run: ls src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/*.nupkg
+
+    - name: test token
+      run: echo ${{ secrets.NUGET_TOCKEN }}
+      
+
     - name: Publish the package to GitHub
       uses: MyJetWallet/nuget-publish-to-github-packages-action@v2.1
       with:
         nupkg-path:  './src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/*.nupkg'
         repo-owner:  'myjetmarketingbox'
         gh-user:  ${{ github.actor }}
-        token:  ${{ secrets.GITHUB_TOKEN }}  
+        token:  ${{ secrets.UAT_GITHUB_TOKEN }}  
 
