@@ -32,11 +32,11 @@ namespace MarketingBox.Bridge.SimpleTrading.Service
 
         public static void Main(string[] args)
         {
-            Console.Title = "MarketingBox.Integration.SimpleTrading.Bridge";
+            Console.Title = "MarketingBox.Bridge.SimpleTrading.Service";
 
             Settings = SettingsReader.GetSettings<SettingsModel>(SettingsFileName);
 
-            using var loggerFactory = LogConfigurator.Configure("MarketingBox.Integration.SimpleTrading.Bridge",
+            using var loggerFactory = LogConfigurator.Configure("MarketingBox.Bridge.SimpleTrading.Service",
                 Settings.SeqServiceUrl);
 
             var logger = loggerFactory.CreateLogger<Program>();

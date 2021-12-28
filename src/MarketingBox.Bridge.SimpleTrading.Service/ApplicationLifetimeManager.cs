@@ -2,14 +2,14 @@
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 
-namespace MarketingBox.Integration.SimpleTrading.Bridge
+namespace MarketingBox.Bridge.SimpleTrading.Service
 {
     public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
     {
         private readonly ILogger<ApplicationLifetimeManager> _logger;
 
         public ApplicationLifetimeManager(
-            IHostApplicationLifetime appLifetime, 
+            IHostApplicationLifetime appLifetime,
             ILogger<ApplicationLifetimeManager> logger)
             : base(appLifetime)
         {

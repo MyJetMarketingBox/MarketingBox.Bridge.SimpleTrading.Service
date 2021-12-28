@@ -3,7 +3,6 @@ using Autofac;
 using MarketingBox.Bridge.SimpleTrading.Service.Modules;
 using MarketingBox.Bridge.SimpleTrading.Service.Services;
 using MarketingBox.Integration.Bridge.Client;
-using MarketingBox.Integration.SimpleTrading.Bridge;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
