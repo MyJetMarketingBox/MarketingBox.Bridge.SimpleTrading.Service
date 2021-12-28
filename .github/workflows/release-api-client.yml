@@ -64,7 +64,7 @@ jobs:
       uses: MyJetWallet/nuget-publish-to-github-packages-action@v2.1
       with:
 #        nupkg-path:  './src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/*.nupkg'
-        nupkg-path: 'src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/MarketingBox.Integration.SimpleTrading.Bridge.Client.2.0.6.nupkg'
+        nupkg-path: 'src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/MarketingBox.Integration.SimpleTrading.Bridge.Client.2.0.7.nupkg'
         repo-owner:  'myjetmarketingbox'
         gh-user:  ${{ github.actor }}
         token:  ${{ secrets.UAT_GITHUB_TOKEN }}  
