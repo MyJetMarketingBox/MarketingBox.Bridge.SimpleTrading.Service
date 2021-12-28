@@ -19,7 +19,7 @@
     <TargetsForTfmSpecificBuildOutput>
       $(TargetsForTfmSpecificBuildOutput);PackReferencedProjectOutputs
     </TargetsForTfmSpecificBuildOutput>
-    <PackageId>MarketingBox.Integration.SimpleTrading.Bridge.Client</PackageId>
+    <PackageId>MarketingBox.Bridge.SimpleTrading.Service</PackageId>
     <Authors>MyJetMarketingBox</Authors>
     <Company>MyJetMarketingBox</Company>
     <Product>MarketingBox</Product>
