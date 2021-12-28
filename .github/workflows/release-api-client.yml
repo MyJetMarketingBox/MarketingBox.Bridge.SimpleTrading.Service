@@ -10,6 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+    - uses: actions/checkout@v2
+    - name: Extract branch name
+      uses: vazco/github-actions-branch-name@v1
+      id: branch
+
+    - id: string
+      uses: ASzc/change-string-case-action@v1
+      with:
+        string: ${{ github.event.repository.name }}
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.*
+
     - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
@@ -26,16 +42,30 @@ jobs:
       run: dotnet test --no-build --configuration Release
 
     - name: Create the package
-      run: dotnet pack --configuration Release src/MarketingBox.Bridge.SimpleTrading.Service.Client /p:Version=${GITHUB_REF#refs/tags/client-}
+      run: dotnet pack --configuration Release src/*${{ github.event.repository.name }}.Client /p:Version=${GITHUB_REF#refs/tags/client-}
 
     - name: Publish the package to GPR
-      run: dotnet nuget push src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/*.nupkg -s "https://api.nuget.org/v3/index.json" -k ${{ secrets.NUGET_TOCKEN }}
+      run: dotnet nuget push src/*${{ github.event.repository.name }}.Client/bin/Release/*.nupkg -s "https://api.nuget.org/v3/index.json" -k ${{ secrets.NUGET_TOCKEN }}
+
+    - name: pwd
+      run: pwd
+
+    - name: ls
+      run: ls -la
+
+    - name: test
+      run: ls src/*${{ github.event.repository.name }}.Client/bin/Release/*.nupkg
+
+    - name: test token
+      run: echo ${{ secrets.NUGET_TOCKEN }}
+      
 
     - name: Publish the package to GitHub
       uses: MyJetWallet/nuget-publish-to-github-packages-action@v2.1
+      run: pwd && ls
       with:
-        nupkg-path:  './src/MarketingBox.Bridge.SimpleTrading.Service.Client/bin/Release/*.nupkg'
+        nupkg-path:  './src/*${{ github.event.repository.name }}.Client/bin/Release/*.nupkg'
         repo-owner:  'myjetmarketingbox'
         gh-user:  ${{ github.actor }}
-        token:  ${{ secrets.GITHUB_TOKEN }}  
+        token:  ${{ secrets.UAT_GITHUB_TOKEN }}  
 
