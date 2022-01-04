@@ -96,7 +96,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             var request = new ReportCountersRequest()
             {
                 Year = dt.Year,
-                Month = dt.Month - 1,
+                Month = dt.Month,
                 ApiKey = _settingsModel.BrandAffiliateKey,
             };
 
