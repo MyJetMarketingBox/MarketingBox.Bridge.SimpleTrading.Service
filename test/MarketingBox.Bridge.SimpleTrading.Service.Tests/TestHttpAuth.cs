@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using MarketingBox.Bridge.SimpleTrading.Service.Services;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations;
 using MarketingBox.Bridge.SimpleTrading.Service.Settings;
-using MarketingBox.Integration.Service.Grpc.Models.Common;
 using MarketingBox.Integration.Service.Grpc.Models.Registrations.Contracts.Bridge;
+using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -75,7 +75,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             };
             var result = await _registerService.SendRegistrationAsync(bridgeRequest);
 
-            Assert.AreEqual(ResultCode.Failed, result.ResultCode);
+            Assert.AreEqual(ResponseStatus.InternalError, result.Status);
         }
     }
 }
