@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using MarketingBox.Bridge.SimpleTrading.Service.Services;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations;
 using MarketingBox.Bridge.SimpleTrading.Service.Settings;
-using MarketingBox.Integration.Service.Grpc.Models.Common;
 using MarketingBox.Integration.Service.Grpc.Models.Registrations.Contracts.Bridge;
+using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -18,7 +18,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
         private Activity _unitTestActivity;
         private SettingsModel _settingsModel;
         private SimpleTradingHttpClient _httpClient;
-        private static Random random = new Random();
+        private static readonly Random Random = new();
         private ILogger<BridgeService> _logger;
         private BridgeService _registerService;
 
@@ -31,7 +31,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
         {
             const string chars = "123456789";
             return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
+                .Select(s => s[Random.Next(s.Length)]).ToArray());
         }
 
 
@@ -56,7 +56,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
 
 
         [Test]
-        public async Task ServiceRequaredAuthHttpSend()
+        public async Task ServiceRequiredAuthHttpSend()
         {
             var dt = DateTime.UtcNow;
             var bridgeRequest = new RegistrationRequest()
@@ -75,7 +75,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             };
             var result = await _registerService.SendRegistrationAsync(bridgeRequest);
 
-            Assert.AreEqual(ResultCode.Failed, result.ResultCode);
+            Assert.AreEqual(ResponseStatus.BadRequest, result.Status);
         }
     }
 }

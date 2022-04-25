@@ -117,7 +117,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             };
 
             var result = await _registerService.GetRegistrationsPerPeriodAsync(request);
-            Assert.IsTrue(result.Items.Count > 0);
+            Assert.IsTrue(result.Data.Count > 0);
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             };
 
             var result = await _registerService.GetRegistrationsPerPeriodAsync(request);
-            Assert.IsTrue(result.Items.Count == 0);
+            Assert.IsTrue(result.Data.Count == 0);
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             };
 
             var result = await _registerService.GetDepositorsPerPeriodAsync(request);
-            Assert.IsTrue(result.Items.Count > 0);
+            Assert.IsTrue(result.Data.Count > 0);
         }
 
         [Test]
@@ -165,9 +165,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             };
 
             var result = await _registerService.GetDepositorsPerPeriodAsync(request);
-            Assert.IsTrue(result.Items.Count == 0);
+            Assert.IsTrue(result.Data.Count == 0);
         }
-
-
     }
 }
