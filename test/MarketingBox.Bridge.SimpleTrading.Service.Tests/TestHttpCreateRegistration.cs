@@ -45,8 +45,8 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
                 SeqServiceUrl = "http://192.168.1.80:5341",
                 BrandAffiliateId = "1027",
                 BrandAffiliateKey = "c23b69afad61464191d067bb166d9511",
-                BrandBrandId = "HandelPro-ST",
-                BrandUrl = "https://integration-test.mnftx.biz/",
+                BrandBrandId = "Monfex-ST",
+                BrandUrl = "https://integration-uat.mnftx.biz",
             };
 
             _unitTestActivity = new Activity("UnitTest").Start();
