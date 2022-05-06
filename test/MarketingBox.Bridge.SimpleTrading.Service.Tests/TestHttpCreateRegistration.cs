@@ -6,7 +6,6 @@ using MarketingBox.Bridge.SimpleTrading.Service.Services;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.Requests;
 using MarketingBox.Bridge.SimpleTrading.Service.Settings;
-using MarketingBox.Integration.Service.Grpc.Models.Common;
 using MarketingBox.Sdk.Common.Exceptions;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;

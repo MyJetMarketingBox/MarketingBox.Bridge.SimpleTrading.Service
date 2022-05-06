@@ -8,8 +8,8 @@ using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.Responses;
 using MarketingBox.Bridge.SimpleTrading.Service.Settings;
 using MarketingBox.Integration.Bridge.Client;
-using MarketingBox.Integration.Service.Domain.Registrations;
 using MarketingBox.Integration.Service.Grpc.Models.Registrations;
+using MarketingBox.Sdk.Common.Enums;
 using MarketingBox.Sdk.Common.Exceptions;
 using MarketingBox.Sdk.Common.Extensions;
 using MarketingBox.Sdk.Common.Models.Grpc;
@@ -46,7 +46,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Services
             var registrations = brandRegistrations.Items.Select(report =>
                 new RegistrationReporting
                 {
-                    Crm = MapCrmStatus(report.CrmStatus),
+                    Crm = report.CrmStatus.ToCrmStatus(),
                     CustomerEmail = report.Email,
                     CustomerId = report.UserId,
                     CreatedAt = report.CreatedAt,
@@ -76,57 +76,6 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Services
                 Status = ResponseStatus.Ok,
                 Data = registrations
             };
-        }
-
-        private static CrmStatus MapCrmStatus(string status)
-        {
-            switch (status.ToLower())
-            {
-                case "new":
-                    return CrmStatus.New;
-
-                case "fullyactivated":
-                    return CrmStatus.FullyActivated;
-
-                case "highpriority":
-                    return CrmStatus.HighPriority;
-
-                case "callback":
-                    return CrmStatus.Callback;
-
-                case "failedexpectation":
-                    return CrmStatus.FailedExpectation;
-
-                case "notvaliddeletedaccount":
-                case "notvalidwrongnumber":
-                case "notvalidnophonenumber":
-                case "notvalidduplicateuser":
-                case "notvalidtestlead":
-                case "notvalidunderage":
-                case "notvalidnolanguagesupport":
-                case "notvalidneverregistered":
-                case "notvalidnoneligiblecountries":
-                    return CrmStatus.NotValid;
-
-                case "notinterested":
-                    return CrmStatus.NotInterested;
-
-                case "transfer":
-                    return CrmStatus.Transfer;
-
-                case "followup":
-                    return CrmStatus.FollowUp;
-
-                case "noanswer":
-                case "autocall":
-                    return CrmStatus.NA;
-
-                case "conversionrenew":
-                    return CrmStatus.ConversionRenew;
-
-                default:
-                    return CrmStatus.Unknown;
-            }
         }
 
         private static RegistrationRequest MapToApi(IntegrationBridge.RegistrationRequest request,
