@@ -6,7 +6,7 @@ using MarketingBox.Bridge.SimpleTrading.Service.Services;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.Requests;
 using MarketingBox.Bridge.SimpleTrading.Service.Settings;
-using MarketingBox.Integration.Service.Grpc.Models.Common;
+using MarketingBox.Sdk.Common.Exceptions;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -44,8 +44,8 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
                 SeqServiceUrl = "http://192.168.1.80:5341",
                 BrandAffiliateId = "1027",
                 BrandAffiliateKey = "c23b69afad61464191d067bb166d9511",
-                BrandBrandId = "HandelPro-ST",
-                BrandUrl = "https://integration-test.mnftx.biz/",
+                BrandBrandId = "Monfex-ST",
+                BrandUrl = "https://integration-uat.mnftx.biz",
             };
 
             _unitTestActivity = new Activity("UnitTest").Start();
@@ -173,9 +173,11 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             var result = await _registerService.RegisterExternalCustomerAsync(request1);
             Assert.AreEqual(ResponseStatus.Ok, result.Status);
             // The same registration with another time window
-            result = await _registerService.RegisterExternalCustomerAsync(request2);
-            Assert.AreEqual(ResponseStatus.InternalError, result.Status);
-            Assert.AreEqual(ResponseStatus.BadRequest, result.Status);
+            var expected = new AlreadyExistsException("Registration: already exists.");
+            var actual = Assert.ThrowsAsync<AlreadyExistsException>(
+                async () => await _registerService.RegisterExternalCustomerAsync(request2));
+            Assert.NotNull(actual);
+            Assert.AreEqual(expected.Message, actual.Message);
         }
 
         [Test]

@@ -44,8 +44,8 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
                 BrandAffiliateId = "1027",
                 //BrandAffiliateKey = "c23b69afad61464191d067bb166d9511",
                 BrandAffiliateKey = "",
-                BrandBrandId = "HandelPro-ST",
-                BrandUrl = "https://integration-test.mnftx.biz/",
+                BrandBrandId = "Monfex-ST",
+                BrandUrl = "https://integration-uat.mnftx.biz",
             };
 
             _unitTestActivity = new Activity("UnitTest").Start();
@@ -75,7 +75,7 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Tests
             };
             var result = await _registerService.SendRegistrationAsync(bridgeRequest);
 
-            Assert.AreEqual(ResponseStatus.BadRequest, result.Status);
+            Assert.AreEqual(ResponseStatus.InternalError, result.Status);
         }
     }
 }

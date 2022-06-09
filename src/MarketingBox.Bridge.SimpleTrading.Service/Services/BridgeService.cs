@@ -5,14 +5,18 @@ using System.Threading.Tasks;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.Enums;
 using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.Requests;
+using MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.Responses;
 using MarketingBox.Bridge.SimpleTrading.Service.Settings;
 using MarketingBox.Integration.Bridge.Client;
-using MarketingBox.Integration.Service.Domain.Registrations;
 using MarketingBox.Integration.Service.Grpc.Models.Registrations;
-using MarketingBox.Sdk.Common.Models;
+using MarketingBox.Sdk.Common.Enums;
+using MarketingBox.Sdk.Common.Exceptions;
+using MarketingBox.Sdk.Common.Extensions;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using IntegrationBridge = MarketingBox.Integration.Service.Grpc.Models.Registrations.Contracts.Bridge;
+using RegistrationRequest =
+    MarketingBox.Bridge.SimpleTrading.Service.Services.Integrations.Contracts.Requests.RegistrationRequest;
 
 namespace MarketingBox.Bridge.SimpleTrading.Service.Services
 {
@@ -22,143 +26,55 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Services
         private readonly ISimpleTradingHttpClient _simpleTradingHttpClient;
         private readonly SettingsModel _settingsModel;
 
-        public BridgeService(ILogger<BridgeService> logger,
-            ISimpleTradingHttpClient simpleTradingHttpClient, SettingsModel settingsModel)
+        private static ReportRequest MapToApi(
+            IntegrationBridge.ReportingRequest request,
+            string authAffApiKey)
         {
-            _logger = logger;
-            _simpleTradingHttpClient = simpleTradingHttpClient;
-            _settingsModel = settingsModel;
-        }
-        /// <summary>
-        /// Register new lead
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public async Task<Response<CustomerInfo>> SendRegistrationAsync(
-            IntegrationBridge.RegistrationRequest request)
-        {
-            _logger.LogInformation("Creating new LeadInfo {@context}", request);
-
-            var brandRequest = MapToApi(request, _settingsModel.BrandBrandId,
-                Convert.ToInt32(_settingsModel.BrandAffiliateId), _settingsModel.BrandAffiliateKey,
-                DateTimeOffset.UtcNow.ToString());
-
-            try
+            return new ReportRequest()
             {
-                return await RegisterExternalCustomerAsync(brandRequest);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating lead {@context}", request);
-                
-                return new Response<CustomerInfo>()
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
-            }
+                Year = request.DateFrom.Year,
+                Month = request.DateFrom.Month,
+                Page = request.PageIndex,
+                PageSize = request.PageSize,
+                ApiKey = authAffApiKey
+            };
         }
 
-        public async Task<Response<CustomerInfo>> RegisterExternalCustomerAsync(
-            RegistrationRequest brandRequest)
+        private static Response<IReadOnlyCollection<RegistrationReporting>> SuccessMapToGrpc(
+            ReportRegistrationResponse brandRegistrations)
         {
-            var registerResult =
-                await _simpleTradingHttpClient.RegisterTraderAsync(brandRequest);
-
-            // Failed
-            if (registerResult.IsFailed)
-            {
-                return new Response<CustomerInfo>()
+            var registrations = brandRegistrations.Items.Select(report =>
+                new RegistrationReporting
                 {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = "Brand response error"
-                    }
-                };
-            }
+                    Crm = report.CrmStatus.ToCrmStatus(),
+                    CustomerEmail = report.Email,
+                    CustomerId = report.UserId,
+                    CreatedAt = report.CreatedAt,
+                    CrmUpdatedAt = DateTime.UtcNow
+                }).ToList();
 
-            // Success
-            if (registerResult.SuccessResult.IsSuccessfully() &&
-                (SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.Ok)
+            return new Response<IReadOnlyCollection<RegistrationReporting>>
             {
-                // Success
-                return new Response<CustomerInfo>()
-                {
-                    Status = ResponseStatus.Ok,
-                    Data = new CustomerInfo()
-                    {
-                        CustomerId = registerResult.SuccessResult.TraderId,
-                        LoginUrl = registerResult.SuccessResult.RedirectUrl,
-                        Token = registerResult.SuccessResult.Token
-                    }
-                };
-            }
+                Status = ResponseStatus.Ok,
+                Data = registrations
+            };
+        }
 
-            // Success, but software failure
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.UserExists)
-            {
-                return new Response<CustomerInfo>()
+        private static Response<IReadOnlyCollection<DepositorReporting>> SuccessMapToGrpc(
+            ReportDepositResponse brandDeposits)
+        {
+            var registrations = brandDeposits.Items.Select(report =>
+                new DepositorReporting
                 {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = "Registration already exists"
-                    }
-                };
-            }
+                    CustomerEmail = report.Email,
+                    CustomerId = report.UserId,
+                    DepositedAt = report.CreatedAt,
+                }).ToList();
 
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.InvalidUserNameOrPassword)
+            return new Response<IReadOnlyCollection<DepositorReporting>>()
             {
-                return new Response<CustomerInfo>()
-                {
-                    Status = ResponseStatus.Unauthorized,
-                    Error = new Error()
-                    {
-                        ErrorMessage = "Invalid username or password"
-                    }
-                };
-            }
-
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.PersonalDataNotValid)
-            {
-                return new Response<CustomerInfo>()
-                {
-                    Status = ResponseStatus.BadRequest,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ((SimpleTradingResultCode)registerResult.SuccessResult.Status).ToString()
-                    }
-                };
-            }
-
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.SystemError)
-            {
-                return new Response<CustomerInfo>()
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ((SimpleTradingResultCode)registerResult.SuccessResult.Status).ToString()
-                    }
-                };
-            }
-
-            return new Response<CustomerInfo>()
-            {
-                Status = ResponseStatus.InternalError,
-                Error = new Error()
-                {
-                    ErrorMessage = "Unknown Error"
-                }
+                Status = ResponseStatus.Ok,
+                Data = registrations
             };
         }
 
@@ -183,127 +99,84 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Services
             };
         }
 
+        private static Response<CustomerInfo> SuccessMapToGrpc(RegistrationResponse brandRegistrationInfo)
+        {
+            return new Response<CustomerInfo>()
+            {
+                Status = ResponseStatus.Ok,
+                Data = new CustomerInfo()
+                {
+                    CustomerId = brandRegistrationInfo.TraderId,
+                    LoginUrl = brandRegistrationInfo.RedirectUrl,
+                    Token = brandRegistrationInfo.Token
+                }
+            };
+        }
+
+
+        public BridgeService(ILogger<BridgeService> logger,
+            ISimpleTradingHttpClient simpleTradingHttpClient, SettingsModel settingsModel)
+        {
+            _logger = logger;
+            _simpleTradingHttpClient = simpleTradingHttpClient;
+            _settingsModel = settingsModel;
+        }
+
+        /// <summary>
+        /// Register new lead
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<Response<CustomerInfo>> SendRegistrationAsync(
+            IntegrationBridge.RegistrationRequest request)
+        {
+            try
+            {
+                _logger.LogInformation("Creating new LeadInfo {@context}", request);
+
+                var brandRequest = MapToApi(request, _settingsModel.BrandBrandId,
+                    Convert.ToInt32(_settingsModel.BrandAffiliateId), _settingsModel.BrandAffiliateKey,
+                    DateTimeOffset.UtcNow.ToString());
+
+                return await RegisterExternalCustomerAsync(brandRequest);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error creating lead {@context}", request);
+                return e.FailedResponse<CustomerInfo>();
+            }
+        }
+
         /// <summary>
         /// Get all registrations per period
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<Response<IReadOnlyCollection<RegistrationReporting>>> GetRegistrationsPerPeriodAsync(IntegrationBridge.ReportingRequest request)
+        public async Task<Response<IReadOnlyCollection<RegistrationReporting>>> GetRegistrationsPerPeriodAsync(
+            IntegrationBridge.ReportingRequest request)
         {
-            _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
-
-            var brandRequest = MapToApi(request, _settingsModel.BrandAffiliateKey);
-
             try
             {
+                _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
+
+                var brandRequest = MapToApi(request, _settingsModel.BrandAffiliateKey);
+
                 // Get registrations
                 var registerResult = await _simpleTradingHttpClient.GetRegistrationsAsync(brandRequest);
                 // Failed
                 if (registerResult.IsFailed)
                 {
-                    return new Response<IReadOnlyCollection<RegistrationReporting>>()
-                    {
-                        Status = ResponseStatus.InternalError,
-                        Error = new Error()
-                        {
-                            ErrorMessage = registerResult.FailedResult.Message
-                        }
-                    };
+                    throw new Exception(registerResult.FailedResult.Message);
                 }
 
-                var registrations = registerResult.SuccessResult.Items
-                    .Select(report => new RegistrationReporting
-                {
-                    Crm = MapCrmStatus(report.CrmStatus),
-                    CustomerEmail = report.Email,
-                    CustomerId = report.UserId,
-                    CreatedAt = report.CreatedAt,
-                    CrmUpdatedAt = DateTime.UtcNow
-                }).ToList();
-                
                 // Success
-                return new Response<IReadOnlyCollection<RegistrationReporting>>()
-                {
-                    Status = ResponseStatus.Ok,
-                    Data = registrations
-                };
+                return SuccessMapToGrpc(registerResult.SuccessResult);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                _logger.LogError(ex, "Error get registration reporting {@context}", request);
-                return new Response<IReadOnlyCollection<RegistrationReporting>>()
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
-            }
-        }
+                _logger.LogError(e, "Error get registration reporting {@context}", request);
 
-        private ReportRequest MapToApi(
-            IntegrationBridge.ReportingRequest request,
-            string authAffApiKey)
-        {
-            return new ReportRequest()
-            {
-                Year = request.DateFrom.Year,
-                Month = request.DateFrom.Month,
-                Page = request.PageIndex,
-                PageSize = request.PageSize,
-                ApiKey = authAffApiKey
-            };
-        }
-
-        private static CrmStatus MapCrmStatus(string status)
-        {
-            switch (status.ToLower())
-            {
-                case "new":
-                    return CrmStatus.New;
-
-                case "fullyactivated":
-                    return CrmStatus.FullyActivated;
-
-                case "highpriority":
-                    return CrmStatus.HighPriority;
-
-                case "callback":
-                    return CrmStatus.Callback;
-
-                case "failedexpectation":
-                    return CrmStatus.FailedExpectation;
-
-                case "notvaliddeletedaccount":
-                case "notvalidwrongnumber":
-                case "notvalidnophonenumber":
-                case "notvalidduplicateuser":
-                case "notvalidtestlead":
-                case "notvalidunderage":
-                case "notvalidnolanguagesupport":
-                case "notvalidneverregistered":
-                case "notvalidnoneligiblecountries":
-                    return CrmStatus.NotValid;
-
-                case "notinterested":
-                    return CrmStatus.NotInterested;
-
-                case "transfer":
-                    return CrmStatus.Transfer;
-
-                case "followup":
-                    return CrmStatus.FollowUp;
-
-                case "noanswer":
-                case "autocall":
-                    return CrmStatus.NA;
-
-                case "conversionrenew":
-                    return CrmStatus.ConversionRenew;
-
-                default:
-                    return CrmStatus.Unknown;
+                return e.FailedResponse<IReadOnlyCollection<RegistrationReporting>>();
             }
         }
 
@@ -312,57 +185,64 @@ namespace MarketingBox.Bridge.SimpleTrading.Service.Services
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<Response<IReadOnlyCollection<DepositorReporting>>> GetDepositorsPerPeriodAsync(IntegrationBridge.ReportingRequest request)
+        public async Task<Response<IReadOnlyCollection<DepositorReporting>>> GetDepositorsPerPeriodAsync(
+            IntegrationBridge.ReportingRequest request)
         {
-            _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
-
-            var brandRequest = MapToApi(request, _settingsModel.BrandAffiliateKey);
-
             try
             {
+                _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
+
+                var brandRequest = MapToApi(request, _settingsModel.BrandAffiliateKey);
+
                 // Get deposits
                 var depositsResult = await _simpleTradingHttpClient.GetDepositsAsync(brandRequest);
                 // Failed
                 if (depositsResult.IsFailed)
                 {
-                    return new Response<IReadOnlyCollection<DepositorReporting>>()
-                    {
-                        Status = ResponseStatus.InternalError,
-                        Error = new Error()
-                        {
-                            ErrorMessage = depositsResult.FailedResult.Message
-                        }
-                    };
+                    throw new Exception(depositsResult.FailedResult.Message);
                 }
 
-                var registrations = depositsResult.SuccessResult.Items
-                    .Select(report => new DepositorReporting
-                {
-                    CustomerEmail = report.Email,
-                    CustomerId = report.UserId,
-                    DepositedAt = report.CreatedAt,
-                }).ToList();
-                
                 // Success
-                return new Response<IReadOnlyCollection<DepositorReporting>>()
-                {
-                    Status = ResponseStatus.Ok,
-                    Data = registrations
-                };
+                return SuccessMapToGrpc(depositsResult.SuccessResult);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                _logger.LogError(ex, "Error get registration reporting {@context}", request);
-
-                return new Response<IReadOnlyCollection<DepositorReporting>>()
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
+                _logger.LogError(e, "Error get registration reporting {@context}", request);
+                return e.FailedResponse<IReadOnlyCollection<DepositorReporting>>();
             }
+        }
+
+        public async Task<Response<CustomerInfo>> RegisterExternalCustomerAsync(
+            RegistrationRequest brandRequest)
+        {
+            var registerResult =
+                await _simpleTradingHttpClient.RegisterTraderAsync(brandRequest);
+
+            // Failed
+            if (registerResult.IsFailed)
+            {
+                throw new Exception(registerResult.FailedResult.Message);
+            }
+
+            // Success
+            if (registerResult.SuccessResult.IsSuccessfully() &&
+                (SimpleTradingResultCode) registerResult.SuccessResult.Status ==
+                SimpleTradingResultCode.Ok)
+            {
+                // Success
+                return SuccessMapToGrpc(registerResult.SuccessResult);
+            }
+
+            throw (SimpleTradingResultCode) registerResult.SuccessResult.Status switch
+            {
+                // Success, but software failure
+                SimpleTradingResultCode.UserExists => new AlreadyExistsException("Registration", null),
+                SimpleTradingResultCode.InvalidUserNameOrPassword => new BadRequestException(
+                    "Invalid username or password"),
+                SimpleTradingResultCode.PersonalDataNotValid => new BadRequestException("Registration data not valid"),
+                SimpleTradingResultCode.SystemError => new Exception("Brand Error"),
+                _ => new Exception("Unknown Error")
+            };
         }
     }
 }
