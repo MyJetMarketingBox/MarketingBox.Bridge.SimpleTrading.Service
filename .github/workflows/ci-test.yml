@@ -113,3 +113,7 @@ jobs:
         script: |
           cd /home/monfex/docker-infrastructure/services/MarketingBox.Bridge.Monfex.Service
           docker-compose pull && docker-compose up -d
+          cd /home/monfex/docker-infrastructure/services/MarketingBox.Bridge.Allianzmarket.Service
+          docker-compose pull && docker-compose up -d
+          cd /home/monfex/docker-infrastructure/services/MarketingBox.Bridge.Handelpro.Service
+          docker-compose pull && docker-compose up -d
