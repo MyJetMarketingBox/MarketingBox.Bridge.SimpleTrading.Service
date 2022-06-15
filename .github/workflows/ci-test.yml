@@ -111,5 +111,5 @@ jobs:
         key: ${{ secrets.TRAFFME_SSH_KEY }}
         port: ${{ secrets.TRAFME_UAT_SVC1_PORT }}
         script: |
-          cd /home/monfex/docker-infrastructure/services/MarketingBox.Monfex.Service
+          cd /home/monfex/docker-infrastructure/services/MarketingBox.Bridge.Monfex.Service
           docker-compose pull && docker-compose up -d
