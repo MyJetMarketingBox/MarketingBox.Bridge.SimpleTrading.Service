@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.2.4" />
-    <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.2.2" />
+    <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.2.4" />
     <PackageReference Include="MyNoSqlServer.Abstractions" Version="1.2.6" />
   </ItemGroup>
 
